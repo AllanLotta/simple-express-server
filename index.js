@@ -4,6 +4,8 @@ const server = express();
 
 server.use(express.json()); //para definir o formato json
 
+let numberOfRequests = 0;
+
 const projects = [
   {
     id: "1",
@@ -22,21 +24,23 @@ const projects = [
   }
 ];
 
-server.use((req, res, next) => {
-  console.log(`Method: ${req.method}; URL: ${req.url}`);
-  next();
-});
+function logRequests(req, res, next) {
+  numberOfRequests++;
+
+  console.log(`Número de requisições: ${numberOfRequests}`);
+
+  return next();
+}
+
+server.use(logRequests);
 
 function checkIdOnArrayElements(req, res, next) {
   const { id } = req.params;
-  var check;
-
-  for (let i = 0; i < projects.length; i++) {
-    if (projects[i].id == id) {
-      return next();
-    }
+  const project = projects.find(p => p.id === id);
+  if (!project) {
+    return res.status(400).json({ error: "The project does not exists!" });
   }
-  return res.status(400).json({ error: "The project does not exists!" });
+  return next();
 }
 function checkTitle(req, res, next) {
   if (!req.body.title) {
